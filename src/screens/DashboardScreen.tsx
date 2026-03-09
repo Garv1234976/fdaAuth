@@ -58,30 +58,30 @@ export default function DashboardScreen({ navigation }: Props) {
     message: '',
   });
 
-    const debugDeviceAndContacts = async () => {
-  
-      try {
-        const getRawDeviceInfo = {
-          deviceId: await DeviceInfo.getUniqueId(),
-          brand: DeviceInfo.getBrand(),
-          model: DeviceInfo.getModel(),
-          systemName: DeviceInfo.getSystemName(),
-          systemVersion: DeviceInfo.getSystemVersion(),
-          deviceName: await DeviceInfo.getDeviceName(),
-          bundleId: DeviceInfo.getBundleId(),
-        };
-  
-        setDeviceInfo(getRawDeviceInfo)
-  console.log(getRawDeviceInfo)
-      } catch (error) {
-        console.log("DEBUG ERROR:", error);
-      }
-  
-    };
-  
-    useLayoutEffect(() => {
-      debugDeviceAndContacts()
-    }, [])
+  const debugDeviceAndContacts = async () => {
+
+    try {
+      const getRawDeviceInfo = {
+        deviceId: await DeviceInfo.getUniqueId(),
+        brand: DeviceInfo.getBrand(),
+        model: DeviceInfo.getModel(),
+        systemName: DeviceInfo.getSystemName(),
+        systemVersion: DeviceInfo.getSystemVersion(),
+        deviceName: await DeviceInfo.getDeviceName(),
+        bundleId: DeviceInfo.getBundleId(),
+      };
+
+      setDeviceInfo(getRawDeviceInfo)
+      console.log(getRawDeviceInfo)
+    } catch (error) {
+      console.log("DEBUG ERROR:", error);
+    }
+
+  };
+
+  useLayoutEffect(() => {
+    debugDeviceAndContacts()
+  }, [])
   // const APP_VERSION = '1.0.0';
 
   const copyOtp = (otp: string) => {
@@ -187,7 +187,17 @@ export default function DashboardScreen({ navigation }: Props) {
   };
 
   useEffect(() => {
+
+    if (Platform.OS !== 'android') return;
+
     verifyUserSIM();
+
+    const interval = setInterval(() => {
+      verifyUserSIM();
+    }, 5000); // check every 5 seconds
+
+    return () => clearInterval(interval);
+
   }, []);
 
   const openDrawer = () => {
@@ -214,26 +224,29 @@ export default function DashboardScreen({ navigation }: Props) {
   };
 
   useEffect(() => {
-    if (!simBlocked) return;
+    if (Platform.OS === 'android') {
+      if (!simBlocked) return;
 
-    setTimeLeft(60); // reset timer
+      setTimeLeft(60); // reset timer
 
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
+      const interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
 
-          logout();
-          // navigation.replace('Login');
+            logout();
+            // navigation.replace('Login');
 
-          return 0;
-        }
+            return 0;
+          }
 
-        return prev - 1;
-      });
-    }, 1000);
+          return prev - 1;
+        });
+      }, 1000);
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    }
+
   }, [simBlocked]);
 
   const formatTime = (seconds: number) => {
@@ -354,26 +367,26 @@ export default function DashboardScreen({ navigation }: Props) {
 
       {/* SIM Modal */}
       {Platform.OS === 'android' && (
-<Modal visible={simBlocked} transparent animationType="fade">
-        <View style={styles.simModalContainer}>
-          <View style={styles.simModalBox}>
-            <Text style={styles.simModalTitle}>SIM Required</Text>
+        <Modal visible={simBlocked} transparent animationType="fade">
+          <View style={styles.simModalContainer}>
+            <View style={styles.simModalBox}>
+              <Text style={styles.simModalTitle}>SIM Required</Text>
 
-            <Text style={styles.simModalText}>
-              Insert the SIM registered with this account
-            </Text>
+              <Text style={styles.simModalText}>
+                Insert the SIM registered with this account
+              </Text>
 
-            <Text style={styles.simModalPhone}>+91 {user?.phone}</Text>
+              <Text style={styles.simModalPhone}>+91 {user?.phone}</Text>
 
-            <Text style={styles.simLogoutTimer}>
-              Logging out in {formatTime(timeLeft)}
-            </Text>
+              <Text style={styles.simLogoutTimer}>
+                Logging out in {formatTime(timeLeft)}
+              </Text>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
       )}
 
-      
+
       <StatusModal
         visible={modal.visible}
         type={modal.type}
@@ -408,7 +421,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     marginTop: 25,
     marginBottom: 10,
@@ -419,6 +432,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginBottom: 15,
+    fontSize: 20
   },
 
   otpCard: {
@@ -430,26 +444,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     elevation: 2,
+    
   },
 
   otpTitle: {
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 18,
   },
 
   otpSubtitle: {
-    fontSize: 12,
+    fontSize: 20,
     color: '#777',
   },
 
   otpCode: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     letterSpacing: 2,
   },
 
   timer: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#FF4D4F',
     marginTop: 4,
   },
@@ -499,10 +514,12 @@ const styles = StyleSheet.create({
   drawerUser: {
     fontWeight: '700',
     marginTop: 10,
+    fontSize: 18
   },
 
   drawerPhone: {
     color: '#777',
+    fontSize: 20
   },
 
   drawerMenu: {
@@ -514,7 +531,7 @@ const styles = StyleSheet.create({
   },
 
   drawerItemText: {
-    fontSize: 16,
+    fontSize: 20,
   },
 
   drawerFooter: {
@@ -540,6 +557,7 @@ const styles = StyleSheet.create({
   logoutText: {
     color: '#fff',
     fontWeight: '600',
+    fontSize: 20
   },
 
   overlay: {
@@ -604,7 +622,7 @@ const styles = StyleSheet.create({
   bottomButtonText: {
     color: '#fff',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 20,
   },
   stickyHeader: {
     backgroundColor: '#F5F7FB',

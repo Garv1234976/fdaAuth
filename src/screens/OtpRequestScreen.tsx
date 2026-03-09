@@ -221,7 +221,7 @@ export default function OtpRequestScreen() {
 
         {/* <Text style={styles.phone}>Phone : +91 {user?.phone}</Text> */}
         {/* <Text style={styles.phone}>Select Site for OTP</Text> */}
-        <Text style={{ fontSize: 12, fontWeight: 700 }}>Select One</Text>
+        <Text style={{ fontSize: 20, fontWeight: 500, marginBottom: 5 }}>Select One</Text>
 
         {/* Title Input */}
 
@@ -244,10 +244,10 @@ export default function OtpRequestScreen() {
                 setOtpTime('');
               }}
               dropdownIconColor={'#333'}
-              style={{ color: '#333' }}
+              style={{ color: '#333' , fontSize: 20}}
             >
               {otpTypes.map(type => (
-                <Picker.Item key={type.key} label={type.label} value={type.key} />
+                <Picker.Item key={type.key} label={type.label} value={type.key} style={{fontSize: 20}} />
               ))}
             </Picker>
           )}
@@ -307,9 +307,10 @@ export default function OtpRequestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    backgroundColor: '#F5F7FB',
-    marginBlock: 30,
+    paddingTop: 68,
+    // backgroundColor: '#F5F7FB',
+    marginInline: 20
+    // marginBlock: 50,
   },
 
   title: {
@@ -345,6 +346,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '600',
+    fontSize: 20
   },
 
   card: {

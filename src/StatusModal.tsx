@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
 
   title:{
-    fontSize:20,
+    fontSize:24,
     fontWeight:'700',
     marginTop:10
   },
@@ -91,12 +91,15 @@ const styles = StyleSheet.create({
     backgroundColor:'#007AFF',
     paddingVertical:10,
     paddingHorizontal:25,
-    borderRadius:8
+    borderRadius:8,
+    width: '100%'
   },
 
   btnText:{
     color:'#fff',
-    fontWeight:'600'
+    fontWeight:'600',
+    textAlign: 'center',
+    fontSize: 18
   }
 
 });
