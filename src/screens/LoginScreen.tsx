@@ -115,10 +115,16 @@ export default function LoginScreen({ navigation }: Props) {
       setWarning('');
 
       const deviceId = await DeviceInfo.getUniqueId();
-
+        deviceId: await DeviceInfo.getUniqueId(),
+        brand: DeviceInfo.getBrand(),
+        model: DeviceInfo.getModel(),
+        systemName: DeviceInfo.getSystemName(),
+        systemVersion: DeviceInfo.getSystemVersion(),
+        deviceName: await DeviceInfo.getDeviceName(),
+        bundleId: DeviceInfo.getBundleId(),
       let body = '';
         if (Platform.OS === 'ios') {
-          body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}&phoneNumber=${phone}&deviceId=${deviceId}`;
+          body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}&phoneNumber=${phone}&deviceId=${deviceId}&brand=${brand}&deviceName=${deviceName}&systemName=${systemName}`;
         } else {
           body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}`;
         }
@@ -197,6 +203,7 @@ export default function LoginScreen({ navigation }: Props) {
       };
 
       setDeviceInfo(getRawDeviceInfo)
+console.log(getRawDeviceInfo)
     } catch (error) {
       console.log("DEBUG ERROR:", error);
     }
@@ -248,9 +255,7 @@ export default function LoginScreen({ navigation }: Props) {
             </TouchableOpacity>
           ) : (
             <>
-              <Text style={{ marginBottom: 6, fontWeight: '600' }}>
-                Enter Phone Number
-              </Text>
+              
 
               <TextInput
                 placeholder="Enter phone number"
@@ -260,7 +265,8 @@ export default function LoginScreen({ navigation }: Props) {
                   setWarning('');
                 }}
                 keyboardType="number-pad"
-                style={{ borderWidth: 1, borderRadius: 10, borderColor: '#c4bebe' }}
+                // style={{ borderWidth: 1, borderRadius: 10, borderColor: '#c4bebe' }}
+                style={styles.input}
                 placeholderTextColor={'#333'}
               />
             </>
@@ -431,7 +437,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     marginBottom: 16,
-    color: '#333'
+    color: '#333',
+    fontSize: 20,
+    borderWidth: 1,
+    borderColor: '#acaca4'
   },
 
   loginButton: {
@@ -439,11 +448,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     alignItems: 'center'
+   
   },
 
   loginText: {
     color: '#fff',
-    fontWeight: '600'
+    fontWeight: '600',
+     fontSize: 20
   },
 
   modalOverlay: {
