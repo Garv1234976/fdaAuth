@@ -1,3 +1,4 @@
+import DeviceInfo from 'react-native-device-info';
 import React, {
   useCallback,
   useContext,
@@ -20,6 +21,7 @@ import {
   Modal,
   ScrollView,
   TextInput,
+  Platform
 } from 'react-native';
 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -47,13 +49,39 @@ export default function DashboardScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
 
   const [, forceUpdate] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(300);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [otps, setOtps] = useState<any[]>([]);
+  const [deviceInfo, setDeviceInfo] = useState<any>(null)
   const [modal, setModal] = useState({
     visible: false,
     type: 'success',
     message: '',
   });
+
+    const debugDeviceAndContacts = async () => {
+  
+      try {
+        const getRawDeviceInfo = {
+          deviceId: await DeviceInfo.getUniqueId(),
+          brand: DeviceInfo.getBrand(),
+          model: DeviceInfo.getModel(),
+          systemName: DeviceInfo.getSystemName(),
+          systemVersion: DeviceInfo.getSystemVersion(),
+          deviceName: await DeviceInfo.getDeviceName(),
+          bundleId: DeviceInfo.getBundleId(),
+        };
+  
+        setDeviceInfo(getRawDeviceInfo)
+  console.log(getRawDeviceInfo)
+      } catch (error) {
+        console.log("DEBUG ERROR:", error);
+      }
+  
+    };
+  
+    useLayoutEffect(() => {
+      debugDeviceAndContacts()
+    }, [])
   // const APP_VERSION = '1.0.0';
 
   const copyOtp = (otp: string) => {
@@ -188,7 +216,7 @@ export default function DashboardScreen({ navigation }: Props) {
   useEffect(() => {
     if (!simBlocked) return;
 
-    setTimeLeft(300); // reset timer
+    setTimeLeft(60); // reset timer
 
     const interval = setInterval(() => {
       setTimeLeft(prev => {
@@ -196,7 +224,7 @@ export default function DashboardScreen({ navigation }: Props) {
           clearInterval(interval);
 
           logout();
-          navigation.replace('Login');
+          // navigation.replace('Login');
 
           return 0;
         }
@@ -325,8 +353,8 @@ export default function DashboardScreen({ navigation }: Props) {
       </View>
 
       {/* SIM Modal */}
-
-      <Modal visible={simBlocked} transparent animationType="fade">
+      {Platform.OS === 'android' && (
+<Modal visible={simBlocked} transparent animationType="fade">
         <View style={styles.simModalContainer}>
           <View style={styles.simModalBox}>
             <Text style={styles.simModalTitle}>SIM Required</Text>
@@ -343,6 +371,9 @@ export default function DashboardScreen({ navigation }: Props) {
           </View>
         </View>
       </Modal>
+      )}
+
+      
       <StatusModal
         visible={modal.visible}
         type={modal.type}

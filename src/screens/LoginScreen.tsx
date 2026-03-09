@@ -115,23 +115,16 @@ export default function LoginScreen({ navigation }: Props) {
       setWarning('');
 
       const deviceId = await DeviceInfo.getUniqueId();
-        deviceId: await DeviceInfo.getUniqueId(),
-        brand: DeviceInfo.getBrand(),
-        model: DeviceInfo.getModel(),
-        systemName: DeviceInfo.getSystemName(),
-        systemVersion: DeviceInfo.getSystemVersion(),
-        deviceName: await DeviceInfo.getDeviceName(),
-        bundleId: DeviceInfo.getBundleId(),
       let body = '';
         if (Platform.OS === 'ios') {
-          body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}&phoneNumber=${phone}&deviceId=${deviceId}&brand=${brand}&deviceName=${deviceName}&systemName=${systemName}`;
+          body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}&phoneNumber=${phone}&deviceId=${deviceId}&brand=${deviceInfo?.brand}&deviceName=${deviceInfo?.deviceName}&systemName=${deviceInfo?.systemName}`;
         } else {
           body = `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}`;
         }
       // const body =
       //   `act=Opt_id_login&regNum=${phone}&regId=${userId}&idPass=${password}&deviceId=${deviceId}&phoneNumber${phone}`;
 
-      console.log(body);
+      // console.log(body);
       
       const res = await axios({
         method: 'POST',
@@ -204,6 +197,7 @@ export default function LoginScreen({ navigation }: Props) {
 
       setDeviceInfo(getRawDeviceInfo)
 console.log(getRawDeviceInfo)
+
     } catch (error) {
       console.log("DEBUG ERROR:", error);
     }
@@ -244,7 +238,7 @@ console.log(getRawDeviceInfo)
               <Text style={styles.warningText}>{warning}</Text>
             </View>
           )}
-          {deviceInfo?.systemName === 'Android' ? (
+          {Platform.OS === 'android' ? (
             <TouchableOpacity
               style={styles.phoneSelector}
               onPress={() => setModalVisible(true)}

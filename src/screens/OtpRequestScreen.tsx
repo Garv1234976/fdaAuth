@@ -1,3 +1,5 @@
+import { getDeviceSIMs } from '../services/simService';
+import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext, useState } from 'react';
 import {
@@ -31,10 +33,10 @@ export default function OtpRequestScreen() {
   const [otpTime, setOtpTime] = useState('');
   const [warning, setWarning] = useState('');
   const [otpTypes, setOtpTypes] = useState<any[]>([]);
-    const [modal,setModal] = useState({
-    visible:false,
-    type:'success',
-    message:''
+  const [modal, setModal] = useState({
+    visible: false,
+    type: 'success',
+    message: ''
   });
   const copyOtp = () => {
     if (!otp) return;
@@ -46,72 +48,113 @@ export default function OtpRequestScreen() {
       message: 'Copied!'
     })
   };
-const getOTP = async () => {
 
-  setWarning('');
-  setOtp('');
-  setOtpTime('');
+  const verifyUserSIM = async () => {
 
-  try {
+    if (Platform.OS !== 'android') return true;
 
-    setLoading(true);
+    try {
 
-    const body = `act=get_Act_Otp&regnum=${user?.phone}&userid=${
-      user?.userId
-    }&idPass=${user?.password}&otp_type=${otpType}&title=${encodeURIComponent(
-      title,
-    )}`;
+      const sims = await getDeviceSIMs();
 
-    const res = await axios.post(
-      'https://futuredigiassets.com/fda/userdash/members/ajaxfuntions-dynamic.php',
-      body,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      },
-    );
+      if (!sims || sims.length === 0) {
+        return false;
+      }
 
-    const data = res.data;
+      const match = sims.find((sim: any) => {
 
-    console.log(data);
+        let number = sim.phoneNumber || '';
+        number = number.slice(-10);
 
-    if (data.status === 'success') {
+        return number === user?.phone;
 
-      setOtp(data.otpValue);
-      setOtpType(data.siteOtpType);
-      setOtpTime(data.otpTime);
+      });
 
-      await saveOtpToStorage(data);
+      return !!match;
 
-    } else {
+    } catch (err) {
 
-      // show minimal warning like login screen
-       setModal({
-        visible: true,
-        type: 'warning',
-        message: data.message || `${selectedOtpLabel} OTP not available`
-      })
-      // setWarning(data.message || `${selectedOtpLabel} OTP not available`);
-
-      setOtp('');
-      setOtpTime('');
+      console.log("SIM verify error", err);
+      return false;
 
     }
 
-  } catch (err) {
+  };
+  const getOTP = async () => {
 
-    console.log(err);
+    setWarning('');
+    setOtp('');
+    setOtpTime('');
 
-    setWarning('Network error. Please try again.');
+    try {
+      const simValid = await verifyUserSIM();
 
-  } finally {
+      if (!simValid) {
+        setModal({
+          visible: true,
+          type: 'error',
+          message: 'Registered SIM not detected'
+        });
+        return;
+      }
 
-    setLoading(false);
+      setLoading(true);
 
-  }
+      const body = `act=get_Act_Otp&regnum=${user?.phone}&userid=${user?.userId
+        }&idPass=${user?.password}&otp_type=${otpType}&title=${encodeURIComponent(
+          title,
+        )}`;
 
-};
+      const res = await axios.post(
+        'https://futuredigiassets.com/fda/userdash/members/ajaxfuntions-dynamic.php',
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        },
+      );
+
+      const data = res.data;
+
+      console.log(data);
+
+      if (data.status === 'success') {
+
+        setOtp(data.otpValue);
+        setOtpType(data.siteOtpType);
+        setOtpTime(data.otpTime);
+
+        await saveOtpToStorage(data);
+
+      } else {
+
+        // show minimal warning like login screen
+        setModal({
+          visible: true,
+          type: 'warning',
+          message: data.message || `${selectedOtpLabel} OTP not available`
+        })
+        // setWarning(data.message || `${selectedOtpLabel} OTP not available`);
+
+        setOtp('');
+        setOtpTime('');
+
+      }
+
+    } catch (err) {
+
+      console.log(err);
+
+      setWarning('Network error. Please try again.');
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   const saveOtpToStorage = async data => {
     try {
@@ -163,100 +206,100 @@ const getOTP = async () => {
     otpTypes.find(t => t.key === otpType)?.label || otpType;
   return (
     <>
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F7FB" />
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F5F7FB" />
 
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <ArrowLeft  size={26} />
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Generate OTP</Text>
-      </View>
-
-      {/* <Text style={styles.user}>User ID : {user?.userId}</Text> */}
-
-      {/* <Text style={styles.phone}>Phone : +91 {user?.phone}</Text> */}
-      {/* <Text style={styles.phone}>Select Site for OTP</Text> */}
-      <Text style={{ fontSize: 12, fontWeight: 700 }}>Select One</Text>
-
-      {/* Title Input */}
-
-      <View style={styles.pickerBox}>
-        {otpTypes.length === 0 ? (
-          <View style={{ padding: 15, alignItems: 'center' }}>
-            <ActivityIndicator size="small" color="#007AFF" />
-            <Text style={{ marginTop: 5, color: '#777' }}>
-              Loading OTP Types...
-            </Text>
-          </View>
-        ) : (
-          <Picker
-            selectedValue={otpType}
-            onValueChange={itemValue => {
-              setOtpType(itemValue);
-              
-              // clear previous OTP when switching site
-              setOtp('');
-              setOtpTime('');
-            }}
-            dropdownIconColor={'#333'}
-            style={{color: '#333'}}
-          >
-            {otpTypes.map(type => (
-              <Picker.Item key={type.key} label={type.label} value={type.key}  />
-            ))}
-          </Picker>
-        )}
-      </View>
-
-      {/* Button */}
-
-      <TouchableOpacity
-        style={[styles.button, loading && { opacity: 0.7 }]}
-        onPress={getOTP}
-        disabled={loading || otpTypes.length === 0}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Get OTP</Text>
-        )}
-      </TouchableOpacity>
-
-{warning !== '' && (
-  <View style={styles.warningBox}>
-    <Text style={styles.warningText}>{warning}</Text>
-  </View>
-)}
-      {/* Result */}
-
-      {otp !== '' && (
-        <View style={styles.card}>
-          <Text style={styles.label}>OTP for {selectedOtpLabel}</Text>
-
-          <TouchableOpacity
-            onPress={copyOtp}
-            style={{ flexDirection: 'column', alignItems: 'center' }}
-          >
-            <Text style={styles.otp}>{otp}</Text>
-            <Text style={styles.copyHint}>Tap to copy</Text>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <ArrowLeft size={26} />
           </TouchableOpacity>
 
-          {/* <View style={{marginBlock: 20}}>
+          <Text style={styles.title}>Generate OTP</Text>
+        </View>
+
+        {/* <Text style={styles.user}>User ID : {user?.userId}</Text> */}
+
+        {/* <Text style={styles.phone}>Phone : +91 {user?.phone}</Text> */}
+        {/* <Text style={styles.phone}>Select Site for OTP</Text> */}
+        <Text style={{ fontSize: 12, fontWeight: 700 }}>Select One</Text>
+
+        {/* Title Input */}
+
+        <View style={styles.pickerBox}>
+          {otpTypes.length === 0 ? (
+            <View style={{ padding: 15, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#007AFF" />
+              <Text style={{ marginTop: 5, color: '#777' }}>
+                Loading OTP Types...
+              </Text>
+            </View>
+          ) : (
+            <Picker
+              selectedValue={otpType}
+              onValueChange={itemValue => {
+                setOtpType(itemValue);
+
+                // clear previous OTP when switching site
+                setOtp('');
+                setOtpTime('');
+              }}
+              dropdownIconColor={'#333'}
+              style={{ color: '#333' }}
+            >
+              {otpTypes.map(type => (
+                <Picker.Item key={type.key} label={type.label} value={type.key} />
+              ))}
+            </Picker>
+          )}
+        </View>
+
+        {/* Button */}
+
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          onPress={getOTP}
+          disabled={loading || otpTypes.length === 0}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Get OTP</Text>
+          )}
+        </TouchableOpacity>
+
+        {warning !== '' && (
+          <View style={styles.warningBox}>
+            <Text style={styles.warningText}>{warning}</Text>
+          </View>
+        )}
+        {/* Result */}
+
+        {otp !== '' && (
+          <View style={styles.card}>
+            <Text style={styles.label}>OTP for {selectedOtpLabel}</Text>
+
+            <TouchableOpacity
+              onPress={copyOtp}
+              style={{ flexDirection: 'column', alignItems: 'center' }}
+            >
+              <Text style={styles.otp}>{otp}</Text>
+              <Text style={styles.copyHint}>Tap to copy</Text>
+            </TouchableOpacity>
+
+            {/* <View style={{marginBlock: 20}}>
             <Text style={styles.meta}>Type : {otpType}</Text>
 
           <Text style={styles.meta}>Time : {otpTime}</Text>
           </View> */}
-        </View>
-      )}
-    </View>
-          <StatusModal
-      visible={modal.visible}
-      type={modal.type}
-      message={modal.message}
-      onClose={()=>setModal({...modal,visible:false})}
-    />
+          </View>
+        )}
+      </View>
+      <StatusModal
+        visible={modal.visible}
+        type={modal.type}
+        message={modal.message}
+        onClose={() => setModal({ ...modal, visible: false })}
+      />
     </>
   );
 }
@@ -356,19 +399,19 @@ const styles = StyleSheet.create({
     marginRight: 15,
     fontWeight: 700,
   },
-  warningBox:{
-  backgroundColor:'#FFE9E9',
-  borderColor:'#FF4D4F',
-  borderWidth:1,
-  padding:12,
-  borderRadius:8,
-  marginBottom:16,
-  marginTop: 10
-},
+  warningBox: {
+    backgroundColor: '#FFE9E9',
+    borderColor: '#FF4D4F',
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    marginTop: 10
+  },
 
-warningText:{
-  color:'#D8000C',
-  fontSize:14,
-  fontWeight:'500'
-},
+  warningText: {
+    color: '#D8000C',
+    fontSize: 14,
+    fontWeight: '500'
+  },
 });
